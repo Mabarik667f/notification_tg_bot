@@ -5,6 +5,7 @@ LEXICON: dict = {
     '/back': '❌ Назад',
     'unknown': '❌ Не известная команда',
     'back': '❌ Назад',
+    'menu': 'Меню',
     'notification_added': '✅ Напоминание установленно',
     'custom_notification': 'Выберете час ⌚, когда будет срабатывать напоминание',
     'pick_minutes': 'Выберете минуту ⌚, когда будет срабатывать напоминание'
@@ -13,6 +14,7 @@ LEXICON: dict = {
 LEXICON_BUTTONS: dict = {
     'add_notification': 'Добавить напоминание',
     'remove_notification': 'Удалить напоминание',
+    'menu': 'Меню',
     '5_minutes_add': '⌚ Через 5 минут',
     '10_minutes_add': '⌚ Через 10 минут',
     '30_minutes_add': '⌚ Через 30 минут',
