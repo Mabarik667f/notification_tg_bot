@@ -2,11 +2,22 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher, Bot
+from aiogram.fsm.state import StatesGroup
+
 from config_data.config import load_config, Config
 from keyboards.set_menu import set_main_menu
 from handlers import user_handlers, other_handlers
 
 logger = logging.getLogger(__name__)
+
+
+class NotificationFSM(StatesGroup):
+    minutes_15_state = 'minutes_15'
+    minutes_30_state = 'minutes_30'
+    minutes_45_state = 'minutes_45'
+    minutes_60_state = 'minutes_60'
+    hour_choice_state = 'hour_state'
+    menu_state = 'menu_state'
 
 
 async def main():
