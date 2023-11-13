@@ -2,11 +2,9 @@ from aiogram.filters import BaseFilter
 from aiogram.types import CallbackQuery
 
 
-class IsTimeCallbackData(BaseFilter):
-    async def __call__(self, callback: CallbackQuery) -> bool:
-        return callback.data.endswith('_add') and callback.data not in ['custom_add', 'day_add']
+class IsDateTimePostfixCallbackData(BaseFilter):
+    def __init__(self, postfix):
+        self.postfix = postfix
 
-
-class IsHourCallbackData(BaseFilter):
-    async def __call__(self, callback: CallbackQuery) -> bool:
-        return callback.data.endswith('hour')
+    async def __call__(self, callback):
+        return callback.data.endswith(self.postfix)

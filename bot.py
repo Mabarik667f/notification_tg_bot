@@ -18,6 +18,11 @@ class NotificationFSM(StatesGroup):
     minutes_60_state = 'minutes_60'
     hour_choice_state = 'hour_state'
     menu_state = 'menu_state'
+    choice_days_state = 'choice_days'
+    exact_day_state = 'exact_day'
+    week_days_state = 'week_days'
+    year_choice_state = 'year_choice_state'
+    month_choice_state = 'month_choice_state'
 
 
 async def main():
@@ -41,4 +46,5 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
+
     asyncio.run(main())
