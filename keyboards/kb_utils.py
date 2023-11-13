@@ -1,24 +1,13 @@
-from aiogram.utils.keyboard import ReplyKeyboardMarkup, ReplyKeyboardBuilder, \
-    KeyboardButton, InlineKeyboardBuilder, InlineKeyboardMarkup, InlineKeyboardButton
+import datetime
 
-from lexicon.lexicon import LEXICON, LEXICON_BUTTONS
+from keyboards.kb_func import add_base_buttons, create_time_keyboard, get_day_name, get_month_name, date_header_buttons
+from aiogram.types import InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from lexicon.lexicon import LEXICON_BUTTONS
+from services.services import get_curr_date
+import calendar
 
-
-def add_base_buttons(keyboard: InlineKeyboardBuilder, *args) -> None:
-    buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(text=LEXICON_BUTTONS['menu'],
-                                                                callback_data='menu'),
-                                           InlineKeyboardButton(text=LEXICON['back'],
-                                                                callback_data='back')]
-    if args:
-        if args[0]:
-            if args[0].text == '<':
-                buttons.insert(0, args[0])
-        if args[1]:
-            if args[1].text == '>':
-                buttons.insert(len(buttons), args[1])
-    keyboard.row(*buttons, width=4)
-
-
+obj_calendar = calendar.Calendar(firstweekday=0)
 # Клавиатура для кнопок создать и удалить напоминание
 notification_methods: list[InlineKeyboardButton] = [InlineKeyboardButton(
     text=LEXICON_BUTTONS['add_notification'],
@@ -47,36 +36,7 @@ notification_add_builder.row(*notification_add, width=3)
 add_base_buttons(notification_add_builder)
 notification_add_kb = notification_add_builder.as_markup()
 
-
 # клавиатура часов
-
-def create_move_button(forward: bool = False, backward: bool = False) -> tuple:
-    backward_button, forward_button = False, False
-    if backward:
-        backward_button = (InlineKeyboardButton(text=LEXICON_BUTTONS['backward'],
-                                                callback_data=LEXICON_BUTTONS['backward']))
-    if forward:
-        forward_button = (InlineKeyboardButton(text=LEXICON_BUTTONS['forward'],
-                                               callback_data=LEXICON_BUTTONS['forward']))
-
-    return backward_button, forward_button
-
-
-def create_time_keyboard(j: int, k: int, time_type: str, forward: bool = False,
-                         backward: bool = False, width: int = 4) -> InlineKeyboardMarkup:
-    time_ls: list[InlineKeyboardButton] = []
-    for i in range(j, k):
-        text = i
-        callback_data = f"{i}_{time_type}"
-        time_ls.append(InlineKeyboardButton(text=text, callback_data=callback_data))
-
-    time_ls_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    time_ls_builder.row(*time_ls, width=width)
-    backward_button, forward_button = create_move_button(backward=backward, forward=forward)
-    add_base_buttons(time_ls_builder, backward_button, forward_button)
-    time_ls_kb = time_ls_builder.as_markup()
-    return time_ls_kb
-
 
 hour_choice = create_time_keyboard(0, 24, 'hour')
 
@@ -84,3 +44,53 @@ minutes_15 = create_time_keyboard(0, 15, 'minute', forward=True, width=5)
 minutes_30 = create_time_keyboard(15, 30, 'minute', forward=True, backward=True, width=5)
 minutes_45 = create_time_keyboard(30, 45, 'minute', forward=True, backward=True, width=5)
 minutes_60 = create_time_keyboard(45, 60, 'minute', backward=True, width=5)
+
+confirm = InlineKeyboardButton(text=LEXICON_BUTTONS['confirm'],
+                               callback_data='confirm')
+
+select_days: list[InlineKeyboardButton] = [InlineKeyboardButton(text=LEXICON_BUTTONS['week_days'],
+                                                                callback_data='week_days'),
+                                           InlineKeyboardButton(text=LEXICON_BUTTONS['exact_date'],
+                                                                callback_data='exact_date')]
+
+select_days_builder = InlineKeyboardBuilder()
+
+select_days_builder.row(*select_days, width=2)
+add_base_buttons(select_days_builder)
+select_days_kb = select_days_builder.as_markup()
+
+day_week_choice: list[InlineKeyboardButton] = []
+for day in obj_calendar.iterweekdays():
+    day_ru, day_en = get_day_name(day)
+    day_button = InlineKeyboardButton(text=day_ru,
+                                      callback_data=f'{day_en}_week')
+    day_week_choice.append(day_button)
+
+day_week_choice_builder = InlineKeyboardBuilder()
+day_week_choice_builder.row(*day_week_choice, width=4)
+add_base_buttons(day_week_choice_builder, confirm=confirm)
+day_week_choice_kb = day_week_choice_builder.as_markup()
+
+current_year = datetime.datetime.now().year
+choice_year: list[InlineKeyboardButton] = [InlineKeyboardButton(text=int(current_year) + year,
+                                                                callback_data=f'{year}_year')
+                                           for year in range(0, 4)]
+
+# Год, месяц, день
+choice_year_builder = InlineKeyboardBuilder()
+choice_year_builder.row(*choice_year, width=4)
+add_base_buttons(choice_year_builder)
+choice_year_kb = choice_year_builder.as_markup()
+
+choice_month: list[InlineKeyboardButton] = []  # нужно будет получать выбранный год, и формировать кол-во месяцев
+for month in range(1, 13):
+    month_ru, month_en = get_month_name(month)
+    month_button = InlineKeyboardButton(text=month_ru,
+                                        callback_data=f"{month_en}_year")
+    choice_month.append(month_button)
+
+choice_month_builder = InlineKeyboardBuilder()
+date_header_buttons(choice_month_builder)
+choice_month_builder.row(*choice_month, width=3)
+add_base_buttons(choice_month_builder)
+choice_month_kb = choice_month_builder.as_markup()
