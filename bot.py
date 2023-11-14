@@ -23,6 +23,7 @@ class NotificationFSM(StatesGroup):
     week_days_state = 'week_days'
     year_choice_state = 'year_choice_state'
     month_choice_state = 'month_choice_state'
+    day_choice_state = 'day_choice_state'
 
 
 async def main():

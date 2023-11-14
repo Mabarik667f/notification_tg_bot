@@ -1,6 +1,7 @@
 import datetime
 
-from keyboards.kb_func import add_base_buttons, create_time_keyboard, get_day_name, get_month_name, date_header_buttons
+from keyboards.kb_func import add_base_buttons, create_time_keyboard, get_day_name, get_month_name, date_header_buttons, \
+    get_days, add_week_kb
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from lexicon.lexicon import LEXICON_BUTTONS
@@ -71,26 +72,4 @@ day_week_choice_builder.row(*day_week_choice, width=4)
 add_base_buttons(day_week_choice_builder, confirm=confirm)
 day_week_choice_kb = day_week_choice_builder.as_markup()
 
-current_year = datetime.datetime.now().year
-choice_year: list[InlineKeyboardButton] = [InlineKeyboardButton(text=int(current_year) + year,
-                                                                callback_data=f'{year}_year')
-                                           for year in range(0, 4)]
 
-# Год, месяц, день
-choice_year_builder = InlineKeyboardBuilder()
-choice_year_builder.row(*choice_year, width=4)
-add_base_buttons(choice_year_builder)
-choice_year_kb = choice_year_builder.as_markup()
-
-choice_month: list[InlineKeyboardButton] = []  # нужно будет получать выбранный год, и формировать кол-во месяцев
-for month in range(1, 13):
-    month_ru, month_en = get_month_name(month)
-    month_button = InlineKeyboardButton(text=month_ru,
-                                        callback_data=f"{month_en}_year")
-    choice_month.append(month_button)
-
-choice_month_builder = InlineKeyboardBuilder()
-date_header_buttons(choice_month_builder)
-choice_month_builder.row(*choice_month, width=3)
-add_base_buttons(choice_month_builder)
-choice_month_kb = choice_month_builder.as_markup()

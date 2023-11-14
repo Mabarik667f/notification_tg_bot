@@ -6,6 +6,8 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 # from filters.filters import IsTimeCallbackData, IsHourCallbackData, IsMinuteCallbackData, CheckWeekDayCallbackData
 from filters.filters import IsDateTimePostfixCallbackData
 from bot import NotificationFSM
+from keyboards.kb_func import DialogCalendar
+from keyboards.shema import CalendarFactory
 from services.services import change_curr_note_info
 from keyboards.kb_utils import *
 from lexicon.lexicon import LEXICON, LEXICON_BUTTONS
@@ -13,6 +15,7 @@ from models.methods import register_user
 
 router = Router()
 
+dl = DialogCalendar()
 
 # Базовые команды или кнопки
 
@@ -130,19 +133,38 @@ async def handler_choice_week_days(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == 'exact_date', StateFilter(NotificationFSM.choice_days_state))
-async def handler_exact_year(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(text=LEXICON['choice_year'],
-                                     reply_markup=choice_year_kb)
+async def handler_exact_year(callback: CallbackQuery,
+                             state: FSMContext):
+    kb = await dl.year_calendar()
+    if kb:
+        await callback.message.edit_text(text=LEXICON['choice_year'],
+                                         reply_markup=kb)
 
     await state.set_state(NotificationFSM.year_choice_state)
 
 
-@router.callback_query(IsDateTimePostfixCallbackData('_year'), StateFilter(NotificationFSM.year_choice_state))
-async def handler_exact_month(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(text=LEXICON['month_choice'],
-                                     reply_markup=choice_month_kb)
+@router.callback_query(CalendarFactory.filter(F.year), StateFilter(NotificationFSM.year_choice_state))
+async def handler_exact_month(callback: CallbackQuery,
+                              callback_data: CalendarFactory,
+                              state: FSMContext):
+    kb = await dl.get_month(callback_data.year)
+    if kb:
+        await callback.message.edit_text(text=str(callback_data.year),
+                                         reply_markup=kb)
 
     await state.set_state(NotificationFSM.month_choice_state)
+
+
+@router.callback_query(CalendarFactory.filter(F.month), StateFilter(NotificationFSM.month_choice_state))
+async def handler_exact_day(callback: CallbackQuery,
+                            callback_data: CalendarFactory,
+                            state: FSMContext):
+    kb = await dl.get_day(callback_data.year, callback_data.month)
+    if kb:
+        await callback.message.edit_text(text=f"{callback_data.year}, {callback_data.month}",
+                                         reply_markup=kb)
+
+    await state.set_state(NotificationFSM.day_choice_state)
 
 
 # Раздел с обработкой кнопок и команд для удаления напоминаний
