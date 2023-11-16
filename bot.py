@@ -17,6 +17,7 @@ class NotificationFSM(StatesGroup):
     minutes_45_state = 'minutes_45'
     minutes_60_state = 'minutes_60'
     hour_choice_state = 'hour_state'
+    get_text_state = 'get_text'
     menu_state = 'menu_state'
     choice_days_state = 'choice_days'
     exact_day_state = 'exact_day'
@@ -24,6 +25,7 @@ class NotificationFSM(StatesGroup):
     year_choice_state = 'year_choice_state'
     month_choice_state = 'month_choice_state'
     day_choice_state = 'day_choice_state'
+    minute_state = 'minute_state'
 
 
 async def main():
