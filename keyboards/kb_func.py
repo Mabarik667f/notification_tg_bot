@@ -37,25 +37,6 @@ def _create_move_button(forward: bool = False, backward: bool = False) -> tuple:
     return backward_button, forward_button
 
 
-def create_time_keyboard(j: int, k: int, time_type: str, forward: bool = False,
-                         backward: bool = False, width: int = 4) -> InlineKeyboardMarkup:
-    time_ls: list[InlineKeyboardButton] = []
-    for i in range(j, k):
-        text = i
-        if i < 10:
-            callback_data = f"0{i}_{time_type}"
-        else:
-            callback_data = f"{i}_{time_type}"
-        time_ls.append(InlineKeyboardButton(text=text, callback_data=callback_data))
-
-    time_ls_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    time_ls_builder.row(*time_ls, width=width)
-    backward_button, forward_button = _create_move_button(backward=backward, forward=forward)
-    add_base_buttons(time_ls_builder, backward=backward_button, forward=forward_button)
-    time_ls_kb = time_ls_builder.as_markup()
-    return time_ls_kb
-
-
 # нужно закинуть сюда выбранный год из redis и месяц
 def date_header_buttons(builder: InlineKeyboardBuilder, year, month=False):
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(text=' ',
@@ -92,10 +73,6 @@ obj_calendar = calendar.Calendar(firstweekday=0)
 def get_days(year, month):
     days_month = obj_calendar.itermonthdays(year, month)
     return days_month
-
-
-def get_hours(year, month, day):
-    curr_hour = datetime.now().hour
 
 
 def add_week_kb(kb):
@@ -156,6 +133,8 @@ class DialogCalendar:
         for day in days:
             if month == self.curr_month and day < self.curr_day and year == self.curr_year:
                 day_button = self.base_button
+            elif month == self.curr_month and year == self.curr_year and self.curr_minute == 59 and self.curr_hour == 23:
+                day_button = self.base_button
             elif day != 0:
                 day_button = InlineKeyboardButton(
                     text=day,
@@ -188,6 +167,9 @@ class DialogCalendar:
         for hour in range(beg, 24):
             if day == self.curr_day and month == self.curr_month and self.curr_year == year and self.curr_hour > hour:
                 hour_button = self.base_button
+            elif day == self.curr_day and month == self.curr_month and self.curr_year == year and \
+                    self.curr_hour == 23 and self.curr_minute == 59:
+                hour_button = self.base_button
             else:
                 hour_button = InlineKeyboardButton(
                     text=hour,
@@ -210,6 +192,8 @@ class DialogCalendar:
         if day == self.curr_day and month == self.curr_month and self.curr_year == year \
                 and self.curr_hour == hour:
             beg = self.curr_minute
+            if beg == 59:
+                year, month, day, hour, minute = self.check_time(year, month, day, hour, beg)
             while beg % 5 != 0:
                 beg -= 1
         for minute in range(beg, 60):
@@ -237,17 +221,24 @@ class DialogCalendar:
         return minute_builder.as_markup()
 
     def check_time(self, year, month, day, hour, minute):
-        if hour == 23 and hour == self.curr_hour:
+        if hour == 23 and (hour == self.curr_hour and day == self.curr_day and month == self.curr_month and
+                           minute == self.curr_minute):
             hour, minute = 0, 0
             _, last_day_of_month = calendar.monthrange(year, month)
-            if day == self.curr_day and day == last_day_of_month:
+            if day == last_day_of_month:
                 day = 1
-                if month == self.curr_month and month + 1 > 12:
+                if month + 1 > 12:
                     month = 1
                     return year + 1, month, day, hour, minute
                 else:
                     return year, month + 1, day, hour, minute
             else:
                 return year, month, day + 1, hour, minute
-        else:
-            return year, month, day, hour, minute
+
+        elif hour != 23 and hour == self.curr_hour and minute == self.curr_minute:
+            return year, month, day + 1, hour + 1, minute
+        return year, month, day, hour, minute
+
+
+class WeekDayDate:
+    pass

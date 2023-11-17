@@ -85,7 +85,6 @@ async def handler_exact_month(callback: CallbackQuery,
                               callback_data: CalendarFactory,
                               state: FSMContext):
     dl = DialogCalendar()
-    print(callback_data)
     kb = await dl.get_month(callback_data.year)
     if kb:
         await callback.message.edit_text(text=LEXICON['choice_month'],
@@ -138,7 +137,7 @@ async def handler_select_minute_notification(callback: CallbackQuery,
 
     ls = create_text(callback_data.month, callback_data.day)
 
-    text = f"{LEXICON['choice_hour']}\n" \
+    text = f"{LEXICON['choice_minute']}\n" \
            f"Дата события: {ls[1]}.{ls[0]}." \
            f"{callback_data.year}\n"
 
@@ -188,49 +187,11 @@ async def handler_added_notification(message: Message, state: FSMContext):
     await message.answer(text=LEXICON['write_text'])
 
 
-@router.callback_query(F.data == '>', StateFilter(NotificationFSM.minutes_15_state,
-                                                  NotificationFSM.minutes_30_state,
-                                                  NotificationFSM.minutes_45_state))
-async def handler_backward_notification(callback: CallbackQuery, state: FSMContext):
-    reply_markup: InlineKeyboardMarkup = minutes_15
-    curr_state = await state.get_state()
-    if curr_state == NotificationFSM.minutes_15_state:
-        reply_markup = minutes_30
-        await state.set_state(NotificationFSM.minutes_30_state)
-    elif curr_state == NotificationFSM.minutes_30_state:
-        reply_markup = minutes_45
-        await state.set_state(NotificationFSM.minutes_45_state)
-    elif curr_state == NotificationFSM.minutes_45_state:
-        reply_markup = minutes_60
-        await state.set_state(NotificationFSM.minutes_60_state)
-    if reply_markup != minutes_15:
-        await callback.message.edit_text(text=LEXICON['custom_notification'],
-                                         reply_markup=reply_markup)
-
-
-@router.callback_query(F.data == '<', StateFilter(NotificationFSM.minutes_30_state,
-                                                  NotificationFSM.minutes_45_state,
-                                                  NotificationFSM.minutes_60_state))
-async def handler_backward_notification(callback: CallbackQuery, state: FSMContext):
-    """Для добавления интервала времени для даты, большей чем день"""
-    reply_markup: InlineKeyboardMarkup = minutes_60
-    curr_state = await state.get_state()
-    if curr_state == NotificationFSM.minutes_30_state:
-        reply_markup = minutes_15
-        await state.set_state(NotificationFSM.minutes_15_state)
-    elif curr_state == NotificationFSM.minutes_45_state:
-        reply_markup = minutes_30
-        await state.set_state(NotificationFSM.minutes_30_state)
-    elif curr_state == NotificationFSM.minutes_60_state:
-        reply_markup = minutes_45
-        await state.set_state(NotificationFSM.minutes_45_state)
-    if reply_markup != minutes_60:
-        await callback.message.edit_text(text=LEXICON['custom_notification'],
-                                         reply_markup=reply_markup)
-
+# @router.callback_query(F.data._in(['>>', '<<']), StateFilter(NotificationFSM.minute_state))
+# async def handler_nav_button_in_select_minute(callback: CallbackQuery):
+#     pass
 
 # Раздел с обработкой кнопок и команд для удаления напоминаний
-
 
 @router.callback_query(F.data == 'remove_notification', StateFilter(NotificationFSM.menu_state))
 async def handler_callback_remove_notification(callback: CallbackQuery, state: FSMContext):

@@ -1,4 +1,4 @@
-from keyboards.kb_func import add_base_buttons, create_time_keyboard, get_day_name
+from keyboards.kb_func import add_base_buttons, get_day_name
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from lexicon.lexicon import LEXICON_BUTTONS, LEXICON
@@ -21,13 +21,6 @@ notification_methods_builder.row(*notification_methods, width=2)
 notification_methods_kb = notification_methods_builder.as_markup()
 
 # клавиатура часов
-
-hour_choice = create_time_keyboard(0, 24, 'hour')
-
-minutes_15 = create_time_keyboard(0, 15, 'minute', forward=True, width=5)
-minutes_30 = create_time_keyboard(15, 30, 'minute', forward=True, backward=True, width=5)
-minutes_45 = create_time_keyboard(30, 45, 'minute', forward=True, backward=True, width=5)
-minutes_60 = create_time_keyboard(45, 60, 'minute', backward=True, width=5)
 
 confirm = InlineKeyboardButton(text=LEXICON_BUTTONS['confirm'],
                                callback_data='confirm')
