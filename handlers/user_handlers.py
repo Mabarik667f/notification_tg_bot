@@ -149,6 +149,18 @@ async def handler_select_minute_notification(callback: CallbackQuery,
     await state.set_state(NotificationFSM.minute_state)
 
 
+@router.callback_query(CalendarFactory.filter(F.minute == 59), StateFilter(NotificationFSM.minute_state))
+async def handler_add_text_for_notification_minute_59(
+        callback: CallbackQuery,
+        callback_data: CalendarFactory,
+        state: FSMContext):
+    dl = DialogCalendar()
+    year, month, day, hour, minute = dl.check_time(callback_data.year, callback_data.month, callback_data.day,
+                                                   callback_data.hour, callback_data.minute)
+    callback_data = CalendarFactory(year=year, month=month, day=day, hour=hour, minute=minute)
+    await handler_add_text_for_notification(callback=callback, callback_data=callback_data, state=state)
+
+
 @router.callback_query(CalendarFactory.filter(F.minute | (F.minute == 0)), StateFilter(NotificationFSM.minute_state))
 async def handler_add_text_for_notification(callback: CallbackQuery,
                                             callback_data: CalendarFactory,

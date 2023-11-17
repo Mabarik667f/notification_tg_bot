@@ -235,3 +235,19 @@ class DialogCalendar:
                 minute_builder.row(*choice_minutes[i:i + 5], width=5)
         add_base_buttons(minute_builder)
         return minute_builder.as_markup()
+
+    def check_time(self, year, month, day, hour, minute):
+        if hour == 23 and hour == self.curr_hour:
+            hour, minute = 0, 0
+            _, last_day_of_month = calendar.monthrange(year, month)
+            if day == self.curr_day and day == last_day_of_month:
+                day = 1
+                if month == self.curr_month and month + 1 > 12:
+                    month = 1
+                    return year + 1, month, day, hour, minute
+                else:
+                    return year, month + 1, day, hour, minute
+            else:
+                return year, month, day + 1, hour, minute
+        else:
+            return year, month, day, hour, minute
