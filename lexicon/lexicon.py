@@ -46,6 +46,11 @@ day_name_ru = {
     'Saturday': 'Сб',
     'Sunday': 'Вс'
 }
+
+days_of_week = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+# Задаем порядок для каждого дня недели
+order_of_days = {day: index for index, day in enumerate(days_of_week)}
+
 month_name_ru = {
     'January': 'Янв',
     'February': 'Фев',
