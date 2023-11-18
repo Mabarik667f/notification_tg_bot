@@ -1,6 +1,8 @@
 from keyboards.kb_func import add_base_buttons, get_day_name
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from keyboards.shema import WeekDaysFactory
 from lexicon.lexicon import LEXICON_BUTTONS, LEXICON
 import calendar
 
@@ -40,7 +42,7 @@ day_week_choice: list[InlineKeyboardButton] = []
 for day in obj_calendar.iterweekdays():
     day_ru, day_en = get_day_name(day)
     day_button = InlineKeyboardButton(text=day_ru,
-                                      callback_data=f'{day_en}_week')
+                                      callback_data=WeekDaysFactory(**{day_en: True}).pack())
     day_week_choice.append(day_button)
 
 day_week_choice_builder = InlineKeyboardBuilder()
