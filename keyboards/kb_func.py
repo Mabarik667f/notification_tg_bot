@@ -3,7 +3,7 @@ from datetime import datetime
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from .shema import CalendarFactory
+from .shema import CalendarFactory, WeekDaysFactory
 
 from lexicon.lexicon import LEXICON_BUTTONS, LEXICON, day_name_ru, month_name_ru
 
@@ -168,7 +168,7 @@ class DialogCalendar:
             if day == self.curr_day and month == self.curr_month and self.curr_year == year and self.curr_hour > hour:
                 hour_button = self.base_button
             elif day == self.curr_day and month == self.curr_month and self.curr_year == year and \
-                    self.curr_hour == 23 and self.curr_minute == 59:
+                    self.curr_minute == 59:
                 hour_button = self.base_button
             else:
                 hour_button = InlineKeyboardButton(
@@ -198,10 +198,7 @@ class DialogCalendar:
                 beg -= 1
         for minute in range(beg, 60):
             if day == self.curr_day and month == self.curr_month and self.curr_year == year \
-                    and self.curr_hour == hour and self.curr_minute > minute:
-                minute_button = self.base_button
-            elif minute == self.curr_minute and day == self.curr_day and month == self.curr_month and self.curr_year == year \
-                    and self.curr_hour == hour:
+                    and self.curr_hour == hour and (self.curr_minute > minute or self.curr_minute == minute):
                 minute_button = self.base_button
             else:
                 minute_button = InlineKeyboardButton(
@@ -234,11 +231,42 @@ class DialogCalendar:
                     return year, month + 1, day, hour, minute
             else:
                 return year, month, day + 1, hour, minute
-
         elif hour != 23 and hour == self.curr_hour and minute == self.curr_minute:
-            return year, month, day + 1, hour + 1, minute
+            minute = 0
+            return year, month, day, hour + 1, minute
         return year, month, day, hour, minute
 
 
 class WeekDayDate:
-    pass
+
+    def __init__(self):
+        self.days = []
+        self.data = {}
+
+    async def get_hour(self):
+        choice_hours: list[InlineKeyboardButton] = []
+        for hour in range(0, 24):
+            hour_button = InlineKeyboardButton(
+                text=hour,
+                callback_data=WeekDaysFactory(hour=hour, minute=None, **self.data).pack())
+
+            choice_hours.append(hour_button)
+
+        hour_builder = InlineKeyboardBuilder()
+        hour_builder.row(*choice_hours, width=4)
+        add_base_buttons(hour_builder)
+        return hour_builder.as_markup()
+
+    async def get_minute(self, hour):
+        choice_minutes: list[InlineKeyboardButton] = []
+        for minute in range(0, 60):
+            minute_button = InlineKeyboardButton(
+                text=minute,
+                callback_data=WeekDaysFactory(hour=hour, minute=minute, **self.data).pack())
+
+            choice_minutes.append(minute_button)
+
+        minute_builder = InlineKeyboardBuilder()
+        minute_builder.row(*choice_minutes, width=5)
+        add_base_buttons(minute_builder)
+        return minute_builder.as_markup()
