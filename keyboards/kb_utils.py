@@ -57,6 +57,18 @@ menu = InlineKeyboardButton(text=LEXICON['menu'],
 menu_kb = InlineKeyboardMarkup(inline_keyboard=[[menu]])
 
 base_builder = InlineKeyboardBuilder()
-add_base_buttons(base_builder)
+add_base_buttons(base_builder, confirm=confirm)
 base_kb = base_builder.as_markup()
+
+list_notifications_type: list[InlineKeyboardButton] = [InlineKeyboardButton(text=LEXICON_BUTTONS['date'],
+                                                                            callback_data='date'),
+                                                       InlineKeyboardButton(text=LEXICON_BUTTONS['week'],
+                                                                            callback_data='week'),
+                                                       ]
+
+list_notifications_type_builder = InlineKeyboardBuilder()
+list_notifications_type_builder.row(*list_notifications_type)
+add_base_buttons(list_notifications_type_builder)
+list_notifications_type_kb = list_notifications_type_builder.as_markup()
+
 
