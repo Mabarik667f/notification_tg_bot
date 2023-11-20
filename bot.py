@@ -3,6 +3,7 @@ import logging
 
 from aiogram import Dispatcher, Bot
 from aiogram.fsm.state import StatesGroup
+from aiogram.fsm.storage.redis import RedisStorage, Redis
 
 from config_data.config import load_config, Config
 from keyboards.set_menu import set_main_menu
@@ -12,20 +13,30 @@ logger = logging.getLogger(__name__)
 
 
 class NotificationFSM(StatesGroup):
-    minutes_15_state = 'minutes_15'
-    minutes_30_state = 'minutes_30'
-    minutes_45_state = 'minutes_45'
-    minutes_60_state = 'minutes_60'
-    hour_choice_state = 'hour_state'
-    get_text_state = 'get_text'
     menu_state = 'menu_state'
+    get_text_state = 'get_text'
     choice_days_state = 'choice_days'
-    exact_day_state = 'exact_day'
     week_days_state = 'week_days'
+    exact_day_state = 'exact_day'
     year_choice_state = 'year_choice_state'
     month_choice_state = 'month_choice_state'
     day_choice_state = 'day_choice_state'
+    hour_choice_state = 'hour_state'
     minute_state = 'minute_state'
+    confirm_data_state = 'confirm_data'
+    list_note_state = 'list_note'
+    date_note_state = 'date_note_state'
+    week_note_state = 'week_note_state'
+    delete_note_state = 'delete_note_state'
+    activate_note_state = 'activate_note_state'
+    delete_exact_note_state = 'delete_exact_note_state'
+    delete_week_note_state = 'delete_week_note_state'
+
+
+cfg: Config = load_config()
+
+redis = Redis(host=cfg.db.db_host, port=6379)
+storage = RedisStorage(redis=redis)
 
 
 async def main():
@@ -36,10 +47,8 @@ async def main():
 
     logger.info('Start bot')
 
-    cfg: Config = load_config()
-
     bot = Bot(token=cfg.tg_bot.token, parse_mode='HTML')
-    dp = Dispatcher()
+    dp = Dispatcher(storage=storage)
 
     dp.include_router(user_handlers.router)
     dp.include_router(other_handlers.router)
