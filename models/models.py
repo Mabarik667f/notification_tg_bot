@@ -33,9 +33,10 @@ try:
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Notification (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            user_Id INT,
+            user_id INT,
             notification_time TIME, 
-            text VARCHAR(50),
+            text VARCHAR(255),
+            activate BOOL,
             FOREIGN KEY(user_id) REFERENCES User(user_id)
             )
         ''')
@@ -45,7 +46,7 @@ try:
             id INT AUTO_INCREMENT PRIMARY KEY,
             date DATE,
             notification_id INT,
-            FOREIGN KEY(notification_id) REFERENCES Notification(id)
+            FOREIGN KEY(notification_id) REFERENCES Notification(id) ON DELETE CASCADE
             )
         ''')
 
@@ -53,7 +54,7 @@ try:
         CREATE TABLE IF NOT EXISTS WeekDayHasNotification (
             week_day_id INT,
             notification_id INT,
-            FOREIGN KEY(notification_id) REFERENCES Notification(id),
+            FOREIGN KEY(notification_id) REFERENCES Notification(id) ON DELETE CASCADE,
             FOREIGN KEY(week_day_id) REFERENCES DayOfWeek(id)
             )
         ''')
