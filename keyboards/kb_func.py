@@ -3,41 +3,28 @@ from datetime import datetime
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from services.services import get_all_exact_notification, get_all_week_notification
 from .shema import CalendarFactory, WeekDaysFactory
 
 from lexicon.lexicon import LEXICON_BUTTONS, LEXICON, day_name_ru, month_name_ru
 
 
-def add_base_buttons(keyboard: InlineKeyboardBuilder, backward: InlineKeyboardButton = False,
-                     forward: InlineKeyboardButton = False,
-                     confirm: InlineKeyboardButton = False) -> None:
+def add_base_buttons(keyboard: InlineKeyboardBuilder,
+                     confirm: InlineKeyboardButton = False,
+                     delete_note: InlineKeyboardButton = False) -> None:
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(text=LEXICON_BUTTONS['menu'],
                                                                 callback_data='menu'),
                                            InlineKeyboardButton(text=LEXICON['back'],
                                                                 callback_data='back')]
-    if backward:
-        buttons.insert(0, backward)
-    if forward:
-        buttons.append(forward)
 
     keyboard.row(*buttons, width=4)
     if confirm:
         keyboard.row(confirm, width=1)
+    if delete_note:
+        keyboard.row(delete_note, width=1)
 
 
-def _create_move_button(forward: bool = False, backward: bool = False) -> tuple:
-    backward_button, forward_button = False, False
-    if backward:
-        backward_button = (InlineKeyboardButton(text=LEXICON_BUTTONS['backward'],
-                                                callback_data=LEXICON_BUTTONS['backward']))
-    if forward:
-        forward_button = (InlineKeyboardButton(text=LEXICON_BUTTONS['forward'],
-                                               callback_data=LEXICON_BUTTONS['forward']))
-
-    return backward_button, forward_button
-
-
-# нужно закинуть сюда выбранный год из redis и месяц
 def date_header_buttons(builder: InlineKeyboardBuilder, year, month=False):
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(text=' ',
                                                                 callback_data='ignore_callback'),
@@ -53,6 +40,15 @@ def date_header_buttons(builder: InlineKeyboardBuilder, year, month=False):
                                       callback_data='ignore_callback')
     buttons.append(button)
     builder.row(*buttons, width=3)
+
+
+def create_confirm_kb(callback_data):
+    base_builder = InlineKeyboardBuilder()
+    add_base_buttons(base_builder)
+    confirm = InlineKeyboardButton(text=LEXICON_BUTTONS['confirm'],
+                                   callback_data=callback_data)
+    base_builder.row(confirm, width=1)
+    return base_builder.as_markup()
 
 
 def get_day_name(day_number):
@@ -270,3 +266,60 @@ class WeekDayDate:
         minute_builder.row(*choice_minutes, width=5)
         add_base_buttons(minute_builder)
         return minute_builder.as_markup()
+
+
+async def create_exact_note_kb(user_id, remove=False):
+    exact_note_data = await get_all_exact_notification(user_id)
+    exact_list: list[InlineKeyboardButton] = []
+    for data in exact_note_data:
+        if remove:
+            text = '❌' + ' '.join(data[0:3]) + ' ' * 130
+            callback_data = f'{data[3]}_delete'
+        else:
+            text = '⏱' + ' '.join(data[0:3]) + ' ' * 130
+            callback_data = 'ignore_callback'
+        button = InlineKeyboardButton(text=text,
+                                      callback_data=callback_data)
+        exact_list.append(button)
+    exact_builder = InlineKeyboardBuilder()
+    exact_builder.row(*exact_list, width=1)
+    delete_note = InlineKeyboardButton(text=LEXICON_BUTTONS['delete'],
+                                       callback_data='delete_note')
+    if remove:
+        delete_note = False
+    add_base_buttons(exact_builder, delete_note=delete_note)
+    return exact_builder.as_markup()
+
+
+async def create_week_note_kb(user_id, remove=False):
+    week_note_data = await get_all_week_notification(user_id)
+    week_list: list[InlineKeyboardButton] = []
+    for data in week_note_data:
+
+        days = " ".join(data[-1])
+        time_text = " ".join(data[0:2])
+        if remove:
+            text = f'❌ {days} {time_text}' + ' ' * 130
+            callback_data = f'{data[3]}_delete'
+        else:
+            if data[2]:
+                text = f'⏱ {days} {time_text}' + ' ' * 130
+                callback_data = f'{data[3]}_activate'
+            else:
+                text = f'⚙️ {days} {time_text}' + ' ' * 130
+                callback_data = f'{data[3]}_activate'
+
+        button = InlineKeyboardButton(text=text,
+                                      callback_data=callback_data)
+
+        week_list.append(button)
+
+    week_builder = InlineKeyboardBuilder()
+    week_builder.row(*week_list, width=1)
+    delete_note = InlineKeyboardButton(text=LEXICON_BUTTONS['delete'],
+                                       callback_data='delete_note')
+    if remove:
+        delete_note = False
+
+    add_base_buttons(week_builder, delete_note=delete_note)
+    return week_builder.as_markup()
