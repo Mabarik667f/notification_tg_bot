@@ -1,0 +1,44 @@
+version: '4'
+services:
+  redis:
+    build:
+      context: buildfiles
+      dockerfile: redis.dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    ports:
+      - "6378:6378"
+  db:
+    image: mysql:latest
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: on-failure
+    ports:
+      - "3306:3306"
+  bot:
+    build:
+      context: .
+      dockerfile: buildfiles/Dockerfile
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - db
+      - redis
+  scheduler:
+    build:
+      context: .
+      dockerfile: buildfiles/scheduler.dockerfile
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - redis
+      - bot
+
+
+volumes:
+  mysql_data:

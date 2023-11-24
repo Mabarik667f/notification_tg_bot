@@ -1,8 +1,8 @@
-from keyboards.shema import WeekDaysFactory, CalendarFactory
-from lexicon.lexicon import day_name_ru
-from models.models import connection_db
+from src.bot.keyboards.shema import WeekDaysFactory, CalendarFactory
+from src.bot.lexicon.lexicon import day_name_ru
+from .models import connection_db
 from datetime import datetime
-from models.redis_methods import get_data_from_redis
+from .redis_methods import get_data_from_redis
 
 
 def register_user(user_id):
@@ -19,12 +19,12 @@ def register_user(user_id):
         db.close()
 
 
-async def create_notification(user_id, callback_data):
+async def create_notification(storage, user_id, callback_data):
     db = connection_db()
     try:
         with db.cursor() as cursor:
             time_str = f"{callback_data.hour}:{callback_data.minute}"
-            text = await get_data_from_redis(user_id)
+            text = await get_data_from_redis(storage, user_id)
             time = datetime.strptime(time_str, '%H:%M').time()
             sql = 'INSERT INTO notification (user_id, notification_time, text, activate) VALUES (%s, %s, %s, %s)'
             cursor.execute(sql, (user_id, time, text, True))

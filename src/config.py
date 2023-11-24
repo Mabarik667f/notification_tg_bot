@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from environs import Env
 
 
@@ -11,6 +12,13 @@ class DatabaseConfig:
 
 
 @dataclass
+class RedisConfig:
+    db: int
+    host: str
+    port: int
+
+
+@dataclass
 class TgBot:
     token: str
 
@@ -19,6 +27,7 @@ class TgBot:
 class Config:
     tg_bot: TgBot
     db: DatabaseConfig
+    redis_cfg: RedisConfig
 
 
 def load_config(path: str = None) -> Config:
@@ -33,8 +42,14 @@ def load_config(path: str = None) -> Config:
             database=env('DATABASE'),
             db_host=env('DB_HOST'),
             db_user=env('DB_USER'),
-            db_password=env('DB_PASSWORD')
-        )
+            db_password=env('DB_PASSWORD'),
+        ),
+        redis_cfg=RedisConfig(
+            db=int(env('REDIS_DATABASE', 1)),
+            host=env('REDIS_HOST'),
+            port=env('REDIS_PORT'),
+
+    )
     )
 
     return config

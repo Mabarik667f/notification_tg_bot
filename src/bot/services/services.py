@@ -1,5 +1,6 @@
-from bot import NotificationFSM
-from models.methods import get_all_exact_notification_from_db, get_all_week_day_notification_from_db
+from src.bot.states.states import NotificationFSM
+from src.db.models.methods import get_all_exact_notification_from_db,\
+    get_all_week_day_notification_from_db
 
 
 def create_text(month=None, day=None, hour=None, minute=None):

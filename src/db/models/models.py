@@ -1,5 +1,5 @@
 import pymysql
-from config_data.config import load_config
+from src.config import load_config
 
 cfg = load_config()
 

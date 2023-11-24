@@ -1,13 +1,13 @@
 import calendar
 from datetime import datetime
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from services.services import get_all_exact_notification, get_all_week_notification
+from src.bot.services.services import get_all_exact_notification, get_all_week_notification
 from .shema import CalendarFactory, WeekDaysFactory
 
-from lexicon.lexicon import LEXICON_BUTTONS, LEXICON, day_name_ru, month_name_ru
+from src.bot.lexicon.lexicon import LEXICON_BUTTONS, LEXICON, day_name_ru, month_name_ru
 
 
 def add_base_buttons(keyboard: InlineKeyboardBuilder,

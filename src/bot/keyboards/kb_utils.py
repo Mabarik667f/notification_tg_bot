@@ -1,9 +1,9 @@
-from keyboards.kb_func import add_base_buttons, get_day_name
+from .kb_func import add_base_buttons, get_day_name
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from keyboards.shema import WeekDaysFactory
-from lexicon.lexicon import LEXICON_BUTTONS, LEXICON
+from .shema import WeekDaysFactory
+from src.bot.lexicon.lexicon import LEXICON_BUTTONS, LEXICON
 import calendar
 
 obj_calendar = calendar.Calendar(firstweekday=0)

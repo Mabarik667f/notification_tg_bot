@@ -4,9 +4,9 @@ import logging
 from aiogram import Dispatcher, Bot
 from aiogram.fsm.storage.redis import RedisStorage, Redis
 from arq import create_pool
-from arq.connections import RedisSettings
+from arq.connections import RedisSettings, ArqRedis
 
-from config_data.config import load_config, Config
+from src.config import load_config, Config
 from keyboards.set_menu import set_main_menu
 from handlers import user_handlers, other_handlers
 
@@ -40,7 +40,9 @@ async def main():
 
     await set_main_menu(bot)
     # await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot, arqredis=pool_settings, storage=storage)
+    await dp.start_polling(bot,
+                           arq_redis=redis_pool,
+                           storage=storage)
 
 
 if __name__ == '__main__':

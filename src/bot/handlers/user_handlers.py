@@ -1,17 +1,21 @@
+from datetime import timedelta
+
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, any_state
 from aiogram.types import Message, CallbackQuery
-from bot import NotificationFSM
-from keyboards.shema import CalendarFactory, WeekDaysFactory
-from keyboards.kb_func import DialogCalendar, WeekDayDate, create_confirm_kb, create_exact_note_kb, create_week_note_kb
-from services.services import create_text, check_week_day, get_all_week_notification
-from keyboards.kb_utils import *
-from lexicon.lexicon import LEXICON, day_name_ru, order_of_days
-from models.methods import register_user, create_notification, delete_notification, activate_week_notification
-from models.redis_methods import save_data_to_redis
+from arq import ArqRedis
+
+from src.bot.states.states import NotificationFSM
+from src.bot.keyboards.shema import CalendarFactory, WeekDaysFactory
+from src.bot.keyboards.kb_func import DialogCalendar, WeekDayDate, create_confirm_kb, create_exact_note_kb, create_week_note_kb
+from src.bot.services.services import create_text, check_week_day
+from src.bot.keyboards.kb_utils import *
+from src.bot.lexicon.lexicon import LEXICON, day_name_ru, order_of_days
+from src.db.models.methods import register_user, create_notification, delete_notification, activate_week_notification
+from src.db.models.redis_methods import save_data_to_redis
 
 router = Router()
 # Базовые команды или кнопки
@@ -19,7 +23,10 @@ wk = WeekDayDate()
 
 
 @router.message(CommandStart(), StateFilter(any_state))
-async def handler_start(message: Message, state: FSMContext):
+async def handler_start(message: Message, state: FSMContext,  arq_redis: ArqRedis):
+    await arq_redis.enqueue_job(
+        'send_message', _defer_by=timedelta(seconds=10), chat_id=message.from_user.id, text='Test'
+    )
     register_user(message.from_user.id)
     await message.answer(text=LEXICON['/start'], reply_markup=notification_methods_kb)
 
@@ -62,11 +69,11 @@ async def handler_add_notification(message: Message, state: FSMContext):
 
 
 @router.message(F.text, StateFilter(NotificationFSM.get_text_state))
-async def handler_added_notification(message: Message, state: FSMContext):
+async def handler_added_notification(message: Message, state: FSMContext, storage):
     await message.answer(text=LEXICON['/add_notification'],
                          reply_markup=select_days_kb)
 
-    await save_data_to_redis(message.from_user.id, message.text)
+    await save_data_to_redis(storage, message.from_user.id, message.text)
 
     await state.set_state(NotificationFSM.choice_days_state)
 
@@ -249,8 +256,8 @@ async def handler_add_text_for_notification(callback: CallbackQuery,
 @router.callback_query(CalendarFactory.filter(), StateFilter(NotificationFSM.confirm_data_state))
 async def handler_add_notification_to_db(callback: CallbackQuery,
                                          callback_data: CalendarFactory,
-                                         state: FSMContext):
-    await create_notification(callback.from_user.id, callback_data)
+                                         storage):
+    await create_notification(storage, callback.from_user.id, callback_data)
 
     await callback.message.edit_text(text=LEXICON['notification_added'],
                                      reply_markup=menu_kb)
@@ -259,8 +266,8 @@ async def handler_add_notification_to_db(callback: CallbackQuery,
 @router.callback_query(WeekDaysFactory.filter(), StateFilter(NotificationFSM.confirm_data_state))
 async def handler_add_notification_to_db(callback: CallbackQuery,
                                          callback_data: CalendarFactory,
-                                         state: FSMContext):
-    await create_notification(callback.from_user.id, callback_data)
+                                         storage):
+    await create_notification(storage, callback.from_user.id, callback_data)
 
     await callback.message.edit_text(text=LEXICON['notification_added'],
                                      reply_markup=menu_kb)
