@@ -141,3 +141,4 @@ __pycache__/
 
 .idea
 /.idea/weather_bot.iml
+/.env.prod.db

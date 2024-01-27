@@ -2,12 +2,11 @@ import asyncio
 import logging
 
 from aiogram import Dispatcher, Bot
-from aiogram.fsm.storage.redis import RedisStorage, Redis
-from arq import create_pool
-from arq.connections import RedisSettings, ArqRedis
+from aiogram.fsm.storage.redis import RedisStorage
+from redis.asyncio import Redis
 
-from src.config import load_config, Config
-from keyboards.set_menu import set_main_menu
+from src import load_config, Config
+from keyboards import set_main_menu
 from handlers import user_handlers, other_handlers
 
 
@@ -16,11 +15,8 @@ logger = logging.getLogger(__name__)
 
 cfg: Config = load_config()
 
-redis = Redis(host=cfg.db.db_host, port=cfg.redis_cfg.port)
+redis = Redis(host=cfg.redis_cfg.host, port=cfg.redis_cfg.port, db=1)
 storage = RedisStorage(redis=redis)
-pool_settings = RedisSettings(host=cfg.redis_cfg.host,
-                              port=cfg.redis_cfg.port,
-                              database=cfg.redis_cfg.db)
 
 
 async def main():
@@ -31,7 +27,6 @@ async def main():
 
     logger.info('Start bot')
 
-    redis_pool = await create_pool(pool_settings)
     bot = Bot(token=cfg.tg_bot.token, parse_mode='HTML')
     dp = Dispatcher(storage=storage)
 
@@ -41,7 +36,6 @@ async def main():
     await set_main_menu(bot)
     # await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot,
-                           arq_redis=redis_pool,
                            storage=storage)
 
 

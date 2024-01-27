@@ -6,14 +6,13 @@ from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, any_state
 from aiogram.types import Message, CallbackQuery
-from arq import ArqRedis
 
 from src.bot.states.states import NotificationFSM
 from src.bot.keyboards.shema import CalendarFactory, WeekDaysFactory
 from src.bot.keyboards.kb_func import DialogCalendar, WeekDayDate, create_confirm_kb, create_exact_note_kb, create_week_note_kb
-from src.bot.services.services import create_text, check_week_day
+from src.bot.services import create_text, check_week_day
 from src.bot.keyboards.kb_utils import *
-from src.bot.lexicon.lexicon import LEXICON, day_name_ru, order_of_days
+from src.bot.lexicon import LEXICON, day_name_ru, order_of_days
 from src.db.models.methods import register_user, create_notification, delete_notification, activate_week_notification
 from src.db.models.redis_methods import save_data_to_redis
 
@@ -23,13 +22,9 @@ wk = WeekDayDate()
 
 
 @router.message(CommandStart(), StateFilter(any_state))
-async def handler_start(message: Message, state: FSMContext,  arq_redis: ArqRedis):
-    await arq_redis.enqueue_job(
-        'send_message', _defer_by=timedelta(seconds=10), chat_id=message.from_user.id, text='Test'
-    )
+async def handler_start(message: Message, state: FSMContext):
     register_user(message.from_user.id)
     await message.answer(text=LEXICON['/start'], reply_markup=notification_methods_kb)
-
     await state.set_state(NotificationFSM.menu_state)
 
 
@@ -315,6 +310,7 @@ async def handler_list_week_date_note(callback: CallbackQuery,
 
 @router.callback_query(F.data == 'delete_note', StateFilter(NotificationFSM.date_note_state))
 async def handler_exact_delete_note_menu(callback: CallbackQuery, state: FSMContext):
+    # запрос к базе, если записей нет - кнопки быть не должно
     kb = await create_exact_note_kb(callback.from_user.id, remove=True)
     if kb:
         await callback.message.edit_text(text=LEXICON['list_note'],
@@ -325,6 +321,7 @@ async def handler_exact_delete_note_menu(callback: CallbackQuery, state: FSMCont
 
 @router.callback_query(F.data == 'delete_note', StateFilter(NotificationFSM.week_note_state))
 async def handler_week_delete_note_menu(callback: CallbackQuery, state: FSMContext):
+    # запрос к базе, если записей нет - кнопки быть не должно
     kb = await create_week_note_kb(callback.from_user.id, remove=True)
     if kb:
         await callback.message.edit_text(text=LEXICON['list_note'],
