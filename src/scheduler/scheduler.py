@@ -1,26 +1,24 @@
 from aiogram import Bot
 
-from bot import pool_settings, logger
-from src.config import load_config
+from celery import Celery
 
-cfg = load_config()
-
-
-async def startup(ctx):
-    ctx['bot'] = Bot(token=cfg.tg_bot.token)
+# cfg = load_config()
 
 
-async def shutdown(ctx):
-    await ctx['bot'].session.close()
+class Config:
+    enable_utc = True
+    timezone = 'Europe/Moscow'
 
 
-async def send_message(ctx, chat_id: int, text: str):
-    bot: Bot = ctx['bot']
-    await bot.send_message(chat_id, text)
+app = Celery('main_scheduler', broker='redis.conf://localhost:6379/0')
+app.config_from_object(Config)
 
 
-class WorkerSettings:
-    redis_settings = pool_settings
-    on_startup = startup
-    on_shutdown = shutdown
-    functions = [send_message, ]
+@app.task
+def mes():
+    print(f"Hi")
+
+
+n = 10
+res = mes.apply_async(coutdown=10)
+

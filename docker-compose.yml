@@ -1,44 +1,38 @@
 version: '4'
 services:
-  redis:
-    build:
-      context: buildfiles
-      dockerfile: redis.dockerfile
-    env_file:
-      - .env
-    restart: on-failure
-    ports:
-      - "6378:6378"
-  db:
-    image: mysql:latest
-    env_file:
-      - .env
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: on-failure
-    ports:
-      - "3306:3306"
   bot:
     build:
       context: .
       dockerfile: buildfiles/Dockerfile
     env_file:
       - .env
-    restart: always
     depends_on:
       - db
       - redis
-  scheduler:
-    build:
-      context: .
-      dockerfile: buildfiles/scheduler.dockerfile
+    restart: always
+  redis:
+    image: redis
     env_file:
       - .env
     restart: always
-    depends_on:
-      - redis
-      - bot
-
+  db:
+    image: mariadb
+    volumes:
+      - mysql_data:/var/lib/mariadb/data/
+    env_file:
+      - .env.prod.db
+    restart: always
+    ports:
+      - "6379:6379"
+    #  worker:
+#    build:
+#      context: buildfiles
+#      dockerfile: scheduler.dockerfile
+#    command: ['celery', 'worker', '-A', 'app.app', '-l', 'info']
+#    depends_on:
+#      - redis.conf
+#      - bot
+#    restart: always
 
 volumes:
   mysql_data:

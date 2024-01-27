@@ -46,8 +46,8 @@ def load_config(path: str = None) -> Config:
         ),
         redis_cfg=RedisConfig(
             db=int(env('REDIS_DATABASE', 1)),
-            host=env('REDIS_HOST'),
-            port=env('REDIS_PORT'),
+            host=env('REDIS_HOST', 'redis.conf'),
+            port=env('REDIS_PORT')
 
     )
     )
