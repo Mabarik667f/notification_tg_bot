@@ -1,5 +1,6 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 
+import pytz
 from aiogram import Router, F
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart, StateFilter, Command
@@ -9,12 +10,14 @@ from aiogram.types import Message, CallbackQuery
 
 from src.bot.states.states import NotificationFSM
 from src.bot.keyboards.shema import CalendarFactory, WeekDaysFactory
-from src.bot.keyboards.kb_func import DialogCalendar, WeekDayDate, create_confirm_kb, create_exact_note_kb, create_week_note_kb
+from src.bot.keyboards.kb_func import DialogCalendar, WeekDayDate, create_confirm_kb, create_exact_note_kb, \
+    create_week_note_kb
 from src.bot.services import create_text, check_week_day
 from src.bot.keyboards.kb_utils import *
 from src.bot.lexicon import LEXICON, day_name_ru, order_of_days
 from src.db.models.methods import register_user, create_notification, delete_notification, activate_week_notification
 from src.db.models.redis_methods import save_data_to_redis
+from src.scheduler.scheduler import exact_date
 
 router = Router()
 # Базовые команды или кнопки
@@ -24,6 +27,8 @@ wk = WeekDayDate()
 @router.message(CommandStart(), StateFilter(any_state))
 async def handler_start(message: Message, state: FSMContext):
     register_user(message.from_user.id)
+    print(message.chat.id)
+
     await message.answer(text=LEXICON['/start'], reply_markup=notification_methods_kb)
     await state.set_state(NotificationFSM.menu_state)
 
@@ -249,20 +254,27 @@ async def handler_add_text_for_notification(callback: CallbackQuery,
 # Добавление в бд
 
 @router.callback_query(CalendarFactory.filter(), StateFilter(NotificationFSM.confirm_data_state))
-async def handler_add_notification_to_db(callback: CallbackQuery,
-                                         callback_data: CalendarFactory,
-                                         storage):
-    await create_notification(storage, callback.from_user.id, callback_data)
+async def handler_add_exact_notification_to_db(callback: CallbackQuery,
+                                               callback_data: CalendarFactory,
+                                               storage):
+
+    time, text, date = await create_notification(storage, callback.from_user.id, callback_data)
+    scheduled_datetime = datetime(callback_data.year, callback_data.month, callback_data.day,
+                                  callback_data.hour, callback_data.minute, 0)
+
+    task_date = scheduled_datetime - datetime.now()
+    exact_date.apply_async(args=[callback.message.chat.id, text],
+                           countdown=task_date.total_seconds())
 
     await callback.message.edit_text(text=LEXICON['notification_added'],
                                      reply_markup=menu_kb)
 
 
 @router.callback_query(WeekDaysFactory.filter(), StateFilter(NotificationFSM.confirm_data_state))
-async def handler_add_notification_to_db(callback: CallbackQuery,
-                                         callback_data: CalendarFactory,
-                                         storage):
-    await create_notification(storage, callback.from_user.id, callback_data)
+async def handler_add_week_notification_to_db(callback: CallbackQuery,
+                                              callback_data: WeekDaysFactory,
+                                              storage):
+    time, text, data = await create_notification(storage, callback.from_user.id, callback_data)
 
     await callback.message.edit_text(text=LEXICON['notification_added'],
                                      reply_markup=menu_kb)

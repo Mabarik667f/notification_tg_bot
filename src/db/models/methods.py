@@ -32,27 +32,42 @@ async def create_notification(storage, user_id, callback_data):
             inserted_id = cursor.lastrowid
 
             if isinstance(callback_data, WeekDaysFactory):
-                id_days = []
-                days = [day_name_ru[day] for day in callback_data]
-                for d in days:
-                    cursor.execute('SELECT id FROM day_of_week '
-                                   'WHERE day_name = %s ', (d,))
-                    id_days.append(*cursor.fetchone())
-
-                for _id in id_days:
-                    cursor.execute('INSERT INTO week_day_has_notification (week_day_id, notification_id) '
-                                   ' VALUES (%s, %s)', (_id, inserted_id))
+                date = await create_week_days_notification(callback_data, inserted_id, cursor)
 
             elif isinstance(callback_data, CalendarFactory):
-                date_str = f"{callback_data.day}.{callback_data.month}.{callback_data.year}"
-                date_exact = datetime.strptime(date_str, "%d.%m.%Y")
-                sql_exact = 'INSERT INTO exact_date (date, notification_id) VALUES (%s, %s)'
-                cursor.execute(sql_exact, (date_exact, inserted_id))
+                date = await create_exact_notification(callback_data, inserted_id, cursor)
 
         db.commit()
 
     finally:
         db.close()
+        return time_str, text, date
+
+
+async def create_week_days_notification(callback_data, inserted_id, cursor):
+    id_days = []
+    days = [day_name_ru[day] for day in callback_data]
+    for d in days:
+        cursor.execute('SELECT id FROM day_of_week '
+                       'WHERE day_name = %s ', (d,))
+        id_days.append(*cursor.fetchone())
+
+    for _id in id_days:
+        cursor.execute('INSERT INTO week_day_has_notification (week_day_id, notification_id) '
+                       ' VALUES (%s, %s)', (_id, inserted_id))
+
+    return days
+
+
+async def create_exact_notification(callback_data, inserted_id, cursor):
+
+    date_str = f"{callback_data.day}.{callback_data.month}.{callback_data.year}"
+    date_exact = datetime.strptime(date_str, "%d.%m.%Y")
+    date_str = date_exact.strftime("%Y-%m-%d")
+    sql_exact = 'INSERT INTO exact_date (date, notification_id) VALUES (%s, %s)'
+    cursor.execute(sql_exact, (date_exact, inserted_id))
+
+    return date_str
 
 
 async def get_all_exact_notification_from_db(user_id):
