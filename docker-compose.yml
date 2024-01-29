@@ -1,4 +1,5 @@
 version: '4'
+
 services:
   bot:
     build:
@@ -24,15 +25,16 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    #  worker:
-#    build:
-#      context: buildfiles
-#      dockerfile: scheduler.dockerfile
-#    command: ['celery', 'worker', '-A', 'app.app', '-l', 'info']
-#    depends_on:
-#      - redis.conf
-#      - bot
-#    restart: always
+  worker:
+    build:
+      context: .
+      dockerfile: buildfiles/scheduler.dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - bot
+    restart: always
 
 volumes:
   mysql_data:
